@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
 from firecrawl import Firecrawl
+from firecrawl.v2.types import JsonFormat
 
 from config import FIRECRAWL_API_KEY
 
@@ -102,9 +103,11 @@ def extract_domain(url: str) -> str:
 async def search_products(query: str, location: str, limit: int = 10) -> list[SearchHit]:
     """Run a Firecrawl web search with geo-targeting. Returns parsed hits."""
     fc = _get_client()
+    # Include location in query to improve regional relevance
+    search_query = f"{query} price buy online in {location}"
     try:
         results = fc.search(
-            query=f"{query} price buy online",
+            query=search_query,
             limit=limit,
             location=location,
         )
@@ -176,11 +179,11 @@ async def scrape_product_page(url: str) -> ScrapedPrice | None:
     try:
         result = fc.scrape(
             url=url,
-            formats=[{
-                "type": "json",
-                "schema": PRICE_SCHEMA,
-                "prompt": "Extract the main product's current selling price, currency, stock status, and shipping cost.",
-            }],
+            formats=[JsonFormat(
+                type="json",
+                schema=PRICE_SCHEMA,
+                prompt="Extract the main product's current selling price, currency, stock status, and shipping cost.",
+            )],
         )
     except Exception as e:
         log.error("Firecrawl scrape failed for %s: %s", url, e)
@@ -225,12 +228,17 @@ async def scrape_product_page(url: str) -> ScrapedPrice | None:
     if price_val is None:
         return None
 
+    # Normalize currency symbols to codes
+    raw_currency = json_data.get("currency", "USD")
+    _SYMBOL_TO_CODE = {"₹": "INR", "$": "USD", "£": "GBP", "€": "EUR", "¥": "JPY"}
+    currency_code = _SYMBOL_TO_CODE.get(raw_currency, raw_currency)
+
     return ScrapedPrice(
         url=url,
         domain=extract_domain(url),
         product_name=json_data.get("product_name", ""),
         price=float(price_val),
-        currency=json_data.get("currency", "USD"),
+        currency=currency_code,
         in_stock=json_data.get("in_stock", True),
         shipping_cost=json_data.get("shipping_cost"),
         original_price=json_data.get("original_price"),

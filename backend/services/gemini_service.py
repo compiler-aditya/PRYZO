@@ -19,7 +19,7 @@ def _get_client() -> genai.Client:
     return _client
 
 
-MODEL = "gemini-2.0-flash"  # user prefers Gemini 3 Flash — swap model ID when available
+MODEL = "gemini-2.5-flash"
 
 
 async def _ask(prompt: str) -> str:

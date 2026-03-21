@@ -211,7 +211,17 @@ async def hunt(product_query: str, region: str, currency: str, on_event=None) ->
         existing = seen.get(deal.retailer_domain)
         if existing is None or deal.final_price < existing.final_price:
             seen[deal.retailer_domain] = deal
-    result.deals = sorted(seen.values(), key=lambda d: d.final_price)
+    deduped = sorted(seen.values(), key=lambda d: d.final_price)
+
+    # ── Filter outlier prices (snippet artifacts) ───────────────────────
+    # If we have 3+ results, drop prices below 10% of the median
+    if len(deduped) >= 3:
+        prices = [d.final_price for d in deduped]
+        median_price = sorted(prices)[len(prices) // 2]
+        threshold = median_price * 0.1
+        deduped = [d for d in deduped if d.final_price >= threshold]
+
+    result.deals = deduped
     result.total_results = len(result.deals)
 
     # ── Gemini analysis ───────────────────────────────────────────────────

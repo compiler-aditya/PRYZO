@@ -81,7 +81,7 @@ async def hunt_product(req: HuntRequest, db: Session = Depends(get_db), _=Depend
     for deal in result.deals:
         row = PriceResult(
             session_id=req.session_id or "anonymous",
-            product_query=req.query,
+            product_query=req.product_query,
             retailer_name=deal.retailer_name,
             retailer_domain=deal.retailer_domain,
             retailer_url=deal.retailer_url,
