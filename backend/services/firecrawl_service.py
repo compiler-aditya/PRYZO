@@ -55,6 +55,14 @@ class ScrapedPrice:
 # Price extraction from search snippets (Tier 1 — FREE, no extra credits)
 # ---------------------------------------------------------------------------
 
+# Patterns that indicate a price is NOT a product price — skip these
+_JUNK_PRICE_CONTEXT = re.compile(
+    r"(?:per\s*month|/mo(?:nth)?|emi|instalment|installment|starting\s*(?:from|at)"
+    r"|price\s*history|lowest\s*price\s*was|was\s*₹|was\s*\$|was\s*£|was\s*€"
+    r"|cashback|reward|(?:up\s*to|save)\s*(?:₹|Rs|USD|\$|£|€))",
+    re.IGNORECASE,
+)
+
 _PRICE_PATTERNS = [
     # ₹24,990 or Rs 24,990 or Rs. 24990 or INR 24,990
     (r"(?:₹|Rs\.?\s*|INR\s*)([0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?)", "INR"),
@@ -72,20 +80,69 @@ _PRICE_PATTERNS = [
     (r"(?:C\$|CAD\s*)([0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?)", "CAD"),
 ]
 
+# Currency symbol → code mapping for normalization
+_SYMBOL_TO_CODE = {"₹": "INR", "$": "USD", "£": "GBP", "€": "EUR", "¥": "JPY"}
+
 
 def extract_price_from_text(text: str) -> tuple[float | None, str | None]:
-    """Try to extract a price and currency from a snippet of text."""
+    """Try to extract a valid product price from text.
+
+    Skips EMI prices, cashback, price history, and "starting from" patterns.
+    """
     if not text:
         return None, None
+
     for pattern, currency in _PRICE_PATTERNS:
         m = re.search(pattern, text)
-        if m:
-            price_str = m.group(1).replace(",", "")
-            try:
-                return float(price_str), currency
-            except ValueError:
-                continue
+        if not m:
+            continue
+
+        # Check context around the match — is this junk?
+        start = max(0, m.start() - 40)
+        end = min(len(text), m.end() + 20)
+        context = text[start:end]
+        if _JUNK_PRICE_CONTEXT.search(context):
+            continue
+
+        price_str = m.group(1).replace(",", "")
+        try:
+            price = float(price_str)
+        except ValueError:
+            continue
+
+        # Sanity: ignore suspiciously small prices (likely page numbers, ratings, etc.)
+        if price < 10:
+            continue
+
+        return price, currency
+
     return None, None
+
+
+# ---------------------------------------------------------------------------
+# URL / Domain helpers
+# ---------------------------------------------------------------------------
+
+# Non-retailer domains — review sites, comparison engines, forums, blogs
+_NON_RETAILER_DOMAINS = frozenset({
+    "camelcamelcamel.com", "pricehistory.app", "pricebefore.com",
+    "pricespy.co.uk", "idealo.de", "geizhals.de", "skinflint.co.uk",
+    "reddit.com", "quora.com", "youtube.com", "twitter.com",
+    "facebook.com", "instagram.com", "pinterest.com",
+    "gsmarena.com", "rtings.com", "techradar.com", "tomsguide.com",
+    "verge.com", "theverge.com", "cnet.com", "pcmag.com",
+    "gadgets360.com", "91mobiles.com", "smartprix.com", "pricebaba.com",
+    "mysmartprice.com", "news18.com", "ndtv.com",
+    "wikipedia.org", "wikihow.com",
+    "klarna.com", "afterpay.com", "paypal.com",
+    "unboxify.in", "designinfo.in", "compareraja.in",
+})
+
+# URL path patterns that indicate non-product pages
+_NON_PRODUCT_PATH = re.compile(
+    r"/(?:blog|article|review|compare|versus|vs|news|guide|how-to|best-|top-\d+)",
+    re.IGNORECASE,
+)
 
 
 def extract_domain(url: str) -> str:
@@ -94,6 +151,35 @@ def extract_domain(url: str) -> str:
     if host.startswith("www."):
         host = host[4:]
     return host
+
+
+def extract_base_domain(domain: str) -> str:
+    """Strip subdomain to get base domain (e.g., 'luxury.tatacliq.com' → 'tatacliq.com').
+
+    Handles multi-part TLDs like .co.uk, .co.jp, .com.au.
+    """
+    parts = domain.split(".")
+    # Known multi-part TLDs
+    multi_tlds = {"co.uk", "co.jp", "com.au", "co.in", "co.nz", "com.br", "co.kr"}
+    if len(parts) >= 3:
+        last_two = f"{parts[-2]}.{parts[-1]}"
+        if last_two in multi_tlds:
+            # base domain = x.co.uk
+            return ".".join(parts[-3:])
+    if len(parts) >= 2:
+        return ".".join(parts[-2:])
+    return domain
+
+
+def is_product_url(url: str, domain: str) -> bool:
+    """Return True if this URL is likely a product page, not a review/blog/comparison."""
+    base = extract_base_domain(domain)
+    if base in _NON_RETAILER_DOMAINS:
+        return False
+    path = urlparse(url).path
+    if _NON_PRODUCT_PATH.search(path):
+        return False
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +224,12 @@ async def search_products(query: str, location: str, limit: int = 10) -> list[Se
             continue
 
         domain = extract_domain(url)
+
+        # Skip non-product URLs (reviews, blogs, comparison sites)
+        if not is_product_url(url, domain):
+            log.debug("Skipping non-product URL: %s", url)
+            continue
+
         combined_text = f"{title} {desc}"
         price, currency = extract_price_from_text(combined_text)
 
@@ -162,11 +254,11 @@ PRICE_SCHEMA = {
     "type": "object",
     "properties": {
         "product_name": {"type": "string"},
-        "price": {"type": "number"},
+        "price": {"type": "number", "description": "Current selling price (not EMI, not MRP)"},
         "currency": {"type": "string"},
         "in_stock": {"type": "boolean"},
         "shipping_cost": {"type": "number"},
-        "original_price": {"type": "number"},
+        "original_price": {"type": "number", "description": "MRP or list price before discount"},
         "discount_percentage": {"type": "number"},
     },
     "required": ["product_name", "price", "currency"],
@@ -182,8 +274,12 @@ async def scrape_product_page(url: str) -> ScrapedPrice | None:
             formats=[JsonFormat(
                 type="json",
                 schema=PRICE_SCHEMA,
-                prompt="Extract the main product's current selling price, currency, stock status, and shipping cost.",
+                prompt=(
+                    "Extract the main product's CURRENT SELLING PRICE (not EMI, not MRP/list price). "
+                    "Include currency, stock status, shipping cost, and original price if discounted."
+                ),
             )],
+            timeout=15000,  # 15s timeout
         )
     except Exception as e:
         log.error("Firecrawl scrape failed for %s: %s", url, e)
@@ -228,16 +324,24 @@ async def scrape_product_page(url: str) -> ScrapedPrice | None:
     if price_val is None:
         return None
 
+    try:
+        price_float = float(price_val)
+    except (TypeError, ValueError):
+        return None
+
+    # Sanity: skip absurdly small prices
+    if price_float < 10:
+        return None
+
     # Normalize currency symbols to codes
     raw_currency = json_data.get("currency", "USD")
-    _SYMBOL_TO_CODE = {"₹": "INR", "$": "USD", "£": "GBP", "€": "EUR", "¥": "JPY"}
     currency_code = _SYMBOL_TO_CODE.get(raw_currency, raw_currency)
 
     return ScrapedPrice(
         url=url,
         domain=extract_domain(url),
         product_name=json_data.get("product_name", ""),
-        price=float(price_val),
+        price=price_float,
         currency=currency_code,
         in_stock=json_data.get("in_stock", True),
         shipping_cost=json_data.get("shipping_cost"),

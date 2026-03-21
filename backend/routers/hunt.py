@@ -44,6 +44,7 @@ class HuntResponse(BaseModel):
     total_results: int = 0
     all_deals: list[dict] = []
     credits_used: int = 0
+    cross_border_option: dict | None = None
 
 
 def _verify_secret(authorization: str = Header(default="")):
