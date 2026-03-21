@@ -43,6 +43,12 @@ class DealResult:
     tier: int = 1
     is_cross_border: bool = False
     cross_border_total: float | None = None
+    # Verification fields
+    trust_score: int = 50  # 0-100, higher = more trustworthy
+    condition: str = "unknown"  # new, refurbished, open_box, unknown
+    warnings: list[str] = field(default_factory=list)
+    verified_price: float | None = None  # Gemini's opinion of the real price
+    seller_type: str = "unknown"  # official, trusted_third_party, unknown_seller
 
     def to_dict(self) -> dict:
         return {
@@ -60,6 +66,11 @@ class DealResult:
             "tier": self.tier,
             "is_cross_border": self.is_cross_border,
             "cross_border_total": self.cross_border_total,
+            "trust_score": self.trust_score,
+            "condition": self.condition,
+            "warnings": self.warnings,
+            "verified_price": self.verified_price,
+            "seller_type": self.seller_type,
         }
 
 
@@ -304,6 +315,9 @@ async def hunt(product_query: str, region: str, currency: str, on_event=None) ->
             unique_scrape.append(h)
     unique_scrape = unique_scrape[:5]  # cap at 5
 
+    # Track page markdown per deal for verification
+    deal_markdown: dict[str, str] = {}  # domain → page markdown
+
     if unique_scrape:
         scrape_tasks = [_scrape_with_timeout(h.url) for h in unique_scrape]
         scraped = await asyncio.gather(*scrape_tasks, return_exceptions=True)
@@ -338,6 +352,10 @@ async def hunt(product_query: str, region: str, currency: str, on_event=None) ->
             )
             result.deals.append(deal)
 
+            # Store markdown for verification
+            if scrape_result.page_markdown:
+                deal_markdown[hit.domain] = scrape_result.page_markdown
+
     # ── Deduplicate by base domain ──────────────────────────────────────
     # Prefer Tier 2 (scraped) over Tier 1 (snippet) for the same domain,
     # since scraped prices are more accurate.
@@ -370,8 +388,68 @@ async def hunt(product_query: str, region: str, currency: str, on_event=None) ->
     # ── Filter outlier prices ────────────────────────────────────────────
     deduped = _filter_outliers(deduped)
 
-    # ── Sort: in-stock first, then by final_price ────────────────────────
-    deduped.sort(key=lambda d: (not d.in_stock, d.final_price))
+    # ── Gemini Deal Verification (FREE — no Firecrawl credits) ──────────
+    # Verify each Tier 2 deal that has page markdown.
+    # Catches: variant bait, conditional pricing, refurbished, hidden fees.
+    deals_to_verify = [d for d in deduped if d.tier == 2 and deal_markdown.get(d.retailer_domain)]
+
+    if deals_to_verify:
+        if on_event:
+            await on_event("verification_started", {"count": len(deals_to_verify)})
+
+        verify_tasks = [
+            gem.verify_deal(
+                product_query=product_query,
+                scraped_price=d.price,
+                scraped_currency=d.currency,
+                original_price=d.original_price,
+                page_markdown=deal_markdown[d.retailer_domain],
+            )
+            for d in deals_to_verify
+        ]
+        verifications = await asyncio.gather(*verify_tasks, return_exceptions=True)
+
+        for deal, vresult in zip(deals_to_verify, verifications):
+            if isinstance(vresult, Exception):
+                log.warning("Verification failed for %s: %s", deal.retailer_domain, vresult)
+                continue
+
+            deal.trust_score = vresult.get("trust_score", 50)
+            deal.condition = vresult.get("condition", "unknown")
+            deal.warnings = vresult.get("warnings", [])
+            deal.seller_type = vresult.get("seller_type", "unknown")
+
+            # If Gemini found a different actual price, record it
+            verified_price = vresult.get("verified_price")
+            if verified_price and isinstance(verified_price, (int, float)) and verified_price != deal.price:
+                deal.verified_price = float(verified_price)
+                # Use verified price as final_price if it's higher (deceptive low price)
+                if deal.verified_price > deal.final_price:
+                    log.info(
+                        "Price adjusted for %s: scraped=%.0f, verified=%.0f (%s)",
+                        deal.retailer_domain, deal.final_price, deal.verified_price,
+                        vresult.get("adjusted_reason", ""),
+                    )
+                    deal.final_price = deal.verified_price
+
+            # Mark refurbished/renewed deals
+            if deal.condition in ("refurbished", "open_box"):
+                deal.warnings.append(f"This is a {deal.condition} unit, not brand new")
+
+            if on_event:
+                await on_event("deal_verified", {
+                    "retailer": deal.retailer_name,
+                    "trust_score": deal.trust_score,
+                    "warnings": deal.warnings,
+                })
+
+    # ── Sort: in-stock first, then by trust (high=better), then by price ─
+    deduped.sort(key=lambda d: (
+        not d.in_stock,          # in-stock first
+        d.condition != "new",    # new condition first
+        -(d.trust_score or 50),  # higher trust first (negative for ascending sort)
+        d.final_price,           # lower price first
+    ))
 
     result.deals = deduped
     result.total_results = len(result.deals)

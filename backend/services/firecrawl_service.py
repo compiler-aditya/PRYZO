@@ -49,6 +49,7 @@ class ScrapedPrice:
     shipping_cost: float | None = None
     original_price: float | None = None
     discount_pct: float | None = None
+    page_markdown: str = ""  # raw page content for Gemini verification
 
 
 # ---------------------------------------------------------------------------
@@ -266,26 +267,40 @@ PRICE_SCHEMA = {
 
 
 async def scrape_product_page(url: str) -> ScrapedPrice | None:
-    """Scrape a single product page and extract structured price data. 1 credit."""
+    """Scrape a single product page. Returns structured price + raw markdown for verification.
+
+    Costs 1 Firecrawl credit. Requests both JSON extraction and markdown in the same call.
+    """
     fc = _get_client()
     try:
         result = fc.scrape(
             url=url,
-            formats=[JsonFormat(
-                type="json",
-                schema=PRICE_SCHEMA,
-                prompt=(
-                    "Extract the main product's CURRENT SELLING PRICE (not EMI, not MRP/list price). "
-                    "Include currency, stock status, shipping cost, and original price if discounted."
+            formats=[
+                "markdown",  # raw page content for Gemini verification
+                JsonFormat(
+                    type="json",
+                    schema=PRICE_SCHEMA,
+                    prompt=(
+                        "Extract the main product's CURRENT SELLING PRICE (not EMI, not MRP/list price). "
+                        "The price must be for a NEW unit (not refurbished/renewed/open-box). "
+                        "Include currency, stock status, shipping cost, and original price if discounted."
+                    ),
                 ),
-            )],
-            timeout=15000,  # 15s timeout
+            ],
+            timeout=15000,
         )
     except Exception as e:
         log.error("Firecrawl scrape failed for %s: %s", url, e)
         return None
 
-    # Parse the structured response
+    # Extract markdown (for Gemini verification later)
+    page_md = ""
+    if isinstance(result, dict):
+        page_md = result.get("markdown", "")
+    else:
+        page_md = getattr(result, "markdown", "") or ""
+
+    # Parse the structured JSON response
     json_data = None
     if isinstance(result, dict):
         json_data = result.get("json") or result.get("data", {}).get("json")
@@ -297,13 +312,8 @@ async def scrape_product_page(url: str) -> ScrapedPrice | None:
                 json_data = getattr(data_obj, "json", None) or (data_obj.get("json") if isinstance(data_obj, dict) else None)
 
     if not json_data:
-        # Fallback: try extracting from markdown
-        md = ""
-        if isinstance(result, dict):
-            md = result.get("markdown", "")
-        else:
-            md = getattr(result, "markdown", "") or ""
-        price, currency = extract_price_from_text(md)
+        # Fallback: try extracting price from markdown
+        price, currency = extract_price_from_text(page_md)
         if price:
             return ScrapedPrice(
                 url=url,
@@ -311,6 +321,7 @@ async def scrape_product_page(url: str) -> ScrapedPrice | None:
                 product_name="",
                 price=price,
                 currency=currency or "USD",
+                page_markdown=page_md[:8000],
             )
         return None
 
@@ -347,4 +358,91 @@ async def scrape_product_page(url: str) -> ScrapedPrice | None:
         shipping_cost=json_data.get("shipping_cost"),
         original_price=json_data.get("original_price"),
         discount_pct=json_data.get("discount_percentage"),
+        page_markdown=page_md[:8000],  # cap to avoid huge payloads
     )
+
+
+# ---------------------------------------------------------------------------
+# Tier 3 — Browser Sandbox price verification (top deals only)
+# ---------------------------------------------------------------------------
+
+async def verify_price_browser(url: str) -> dict | None:
+    """Open a real browser, navigate to product page, extract the actual rendered price.
+
+    This catches bait-and-switch where the scraped HTML shows one price
+    but the JavaScript-rendered page shows another (e.g., after variant selection).
+
+    Costs ~5 credits per session. Use only for top 1-2 deals.
+    """
+    client = _get_client()
+    try:
+        session = client.browser(ttl=60, activity_ttl=30)
+        session_id = session.session_id
+
+        # Navigate and extract rendered price
+        nav_result = client.browser_execute(
+            session_id=session_id,
+            language="python",
+            code=f"""
+import json
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.connect_over_cdp("{session.cdp_url}")
+    page = browser.contexts[0].pages[0]
+    page.goto("{url}", wait_until="domcontentloaded", timeout=15000)
+    page.wait_for_timeout(3000)  # let JS render
+
+    # Try common price selectors
+    price_selectors = [
+        '[data-testid="price"]', '.price', '.a-price .a-offscreen',
+        '#priceblock_ourprice', '#priceblock_dealprice',
+        '.product-price', '.selling-price', '.special-price',
+        '[class*="price"]', '[class*="Price"]',
+    ]
+    prices_found = []
+    for sel in price_selectors:
+        els = page.query_selector_all(sel)
+        for el in els[:3]:
+            text = el.inner_text().strip()
+            if text and any(c.isdigit() for c in text):
+                prices_found.append(text)
+
+    # Check for "Add to Cart" button existence (stock indicator)
+    cart_btn = page.query_selector('button:has-text("Add to Cart"), button:has-text("Buy Now"), button:has-text("Add to Bag")')
+    has_cart = cart_btn is not None
+
+    # Check for refurbished/renewed labels
+    body_text = page.inner_text("body")[:5000]
+    refurb_keywords = ["refurbished", "renewed", "open box", "pre-owned", "used"]
+    is_refurb = any(kw in body_text.lower() for kw in refurb_keywords)
+
+    print(json.dumps({{
+        "prices_found": prices_found[:5],
+        "has_add_to_cart": has_cart,
+        "is_refurbished": is_refurb,
+    }}))
+""",
+            timeout=30,
+        )
+
+        # Clean up browser
+        try:
+            client.delete_browser(session_id)
+        except Exception:
+            pass
+
+        # Parse result
+        output = ""
+        if isinstance(nav_result, dict):
+            output = nav_result.get("output", "")
+        else:
+            output = getattr(nav_result, "output", "") or ""
+
+        if output:
+            return json.loads(output)
+
+    except Exception as e:
+        log.error("Browser verification failed for %s: %s", url, e)
+
+    return None
