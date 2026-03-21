@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import init_db
-from routers import hunt, dashboard
+from routers import hunt, dashboard, identify
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
@@ -37,6 +37,7 @@ app.add_middleware(
 
 app.include_router(hunt.router)
 app.include_router(dashboard.router)
+app.include_router(identify.router)
 
 
 @app.get("/health")

@@ -1,9 +1,11 @@
-"""Gemini API wrapper — price analysis, currency conversion, recommendations."""
+"""Gemini API wrapper — price analysis, currency conversion, visual identification."""
 
+import base64
 import json
 import logging
 
 from google import genai
+from google.genai import types
 
 from config import GEMINI_API_KEY
 
@@ -125,3 +127,54 @@ If none found, return [].
     if isinstance(parsed, list):
         return [str(c) for c in parsed if isinstance(c, str) and 3 <= len(c) <= 25]
     return []
+
+
+async def identify_product(image_b64: str, mime_type: str = "image/jpeg") -> dict:
+    """Identify a product from a camera image using Gemini vision.
+
+    Returns dict with product_name, brand, model, category, confidence, variants, search_query.
+    """
+    client = _get_client()
+    image_bytes = base64.b64decode(image_b64)
+
+    prompt = """You are a product identification expert. Identify the product in this image.
+
+Look for:
+- Brand name and logo
+- Model number (on the product body, packaging, or label)
+- Product category (headphones, phone, laptop, etc.)
+- Color and any visible variant info (storage size, edition)
+
+Respond ONLY with a JSON object (no markdown fences):
+{
+  "identified": true or false,
+  "confidence": "high" or "medium" or "low",
+  "brand": "<brand name>",
+  "model": "<specific model name/number>",
+  "product_name": "<full product name for search, e.g. Sony WH-1000XM5>",
+  "category": "<product category>",
+  "color": "<color if visible>",
+  "variants": ["<possible variants if model is ambiguous, e.g. 128GB, 256GB>"],
+  "search_query": "<optimized search query to find this product's price>",
+  "ambiguity_note": "<if confidence is low/medium, explain what's uncertain>"
+}
+
+If you cannot identify the product at all, set identified=false and explain in ambiguity_note."""
+
+    try:
+        resp = client.models.generate_content(
+            model=MODEL,
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                prompt,
+            ],
+        )
+        raw = resp.text or ""
+    except Exception as e:
+        log.error("Gemini vision call failed: %s", e)
+        return {"identified": False, "confidence": "low", "ambiguity_note": str(e)}
+
+    parsed = _parse_json(raw)
+    if isinstance(parsed, dict):
+        return parsed
+    return {"identified": False, "confidence": "low", "ambiguity_note": "Failed to parse response"}
