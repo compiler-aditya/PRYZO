@@ -28,5 +28,9 @@ out/
 .DS_Store
 Thumbs.db
 
+# Local reference docs (not part of the app)
+Developer_docs/
+elvenhacks.md
+
 # Misc
 *.log
