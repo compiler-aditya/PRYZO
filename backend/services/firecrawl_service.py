@@ -113,9 +113,13 @@ async def search_products(query: str, location: str, limit: int = 10) -> list[Se
         return []
 
     hits: list[SearchHit] = []
-    data = results if isinstance(results, list) else getattr(results, "data", results)
-    if isinstance(data, dict):
-        data = data.get("data", data.get("web", []))
+
+    # SearchData has .web, .news, .images attributes
+    data = getattr(results, "web", None)
+    if data is None:
+        data = results if isinstance(results, list) else getattr(results, "data", results)
+        if isinstance(data, dict):
+            data = data.get("web", data.get("data", []))
 
     for item in data or []:
         if isinstance(item, dict):
