@@ -1,0 +1,16 @@
+URL,Company Name,Company Description,Industry
+https://docs.firecrawl.dev/rate-limits,Firecrawl,Firecrawl offers automated web scraping solutions with various subscription plans and API access.,Web Scraping
+https://docs.firecrawl.dev/billing,Firecrawl,Firecrawl is a credit-based web scraping API service that allows users to extract web data seamlessly.,Web scraping and data extraction services
+https://docs.firecrawl.dev/features/browser,Firecrawl,Firecrawl provides a browser environment for agents to interact with the web for web scraping and data extraction.,Web Scraping / Data Extraction
+https://docs.firecrawl.dev/features/agent,Firecrawl,"Firecrawl provides a powerful API that searches, navigates, and gathers data from various websites to streamline data collection.",Web Data Extraction
+https://docs.firecrawl.dev/features/models,Firecrawl,Firecrawl provides web scraping solutions with models designed for various data extraction complexities.,Web Data Extraction
+https://docs.firecrawl.dev/features/scrape,Firecrawl,"Firecrawl converts web pages into markdown, ideal for LLM applications.",Web Scraping
+https://docs.firecrawl.dev/features/fast-scraping,Firecrawl,"Firecrawl provides fast, efficient web scraping solutions for businesses, allowing users to gather online data seamlessly.",Web Scraping
+https://docs.firecrawl.dev/features/batch-scrape,Firecrawl,Firecrawl provides tools and services for scraping web data efficiently and securely.,Web Scraping
+https://docs.firecrawl.dev/features/llm-extract,Firecrawl,Firecrawl provides AI-powered web scraping and data extraction services.,Web Scraping and Data Extraction
+https://docs.firecrawl.dev/features/change-tracking,Firecrawl,"Firecrawl provides tools for web data collection, including change tracking and API access for developers.",Web Scraping
+https://docs.firecrawl.dev/features/enhanced-mode,Firecrawl,Firecrawl provides tools for web data extraction with various proxy strategies.,Web Scraping
+https://docs.firecrawl.dev/features/proxies,Firecrawl,"Firecrawl provides tools for web data extraction and scraping, utilizing proxies for optimal performance.",Web Scraping
+https://docs.firecrawl.dev/features/document-parsing,Firecrawl,"Firecrawl provides powerful document parsing capabilities, allowing you to extract structured content from various document formats.",Web Scraping and Data Extraction
+https://docs.firecrawl.dev/features/search,Firecrawl,Firecrawl provides a search and scraping API designed to deliver web data for AI and analysis.,Web Scraping and Search API
+https://docs.firecrawl.dev/features/map,Firecrawl,"Firecrawl provides web crawling, scraping, and search APIs for AI, enabling users to gather structured web data efficiently.",Web Data Extraction

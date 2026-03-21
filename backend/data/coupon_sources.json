@@ -1,0 +1,28 @@
+{
+  "global": [
+    "retailmenot.com",
+    "coupons.com",
+    "honey.com",
+    "slickdeals.net",
+    "dealspotr.com"
+  ],
+  "IN": [
+    "coupondunia.in",
+    "grabon.in",
+    "cashkaro.com"
+  ],
+  "US": [
+    "retailmenot.com",
+    "coupons.com",
+    "slickdeals.net",
+    "rakuten.com"
+  ],
+  "UK": [
+    "vouchercodes.co.uk",
+    "hotukdeals.com"
+  ],
+  "DE": [
+    "mydealz.de",
+    "gutscheine.de"
+  ]
+}

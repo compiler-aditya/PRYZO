@@ -1,0 +1,97 @@
+{
+  "IN": {
+    "location_name": "India",
+    "currency": "INR",
+    "symbol": "₹",
+    "retailers": [
+      {"domain": "amazon.in", "name": "Amazon India", "priority": 1},
+      {"domain": "flipkart.com", "name": "Flipkart", "priority": 1},
+      {"domain": "croma.com", "name": "Croma", "priority": 2},
+      {"domain": "reliancedigital.in", "name": "Reliance Digital", "priority": 2},
+      {"domain": "vijaysales.com", "name": "Vijay Sales", "priority": 3},
+      {"domain": "tatacliq.com", "name": "Tata CLiQ", "priority": 3}
+    ]
+  },
+  "US": {
+    "location_name": "United States",
+    "currency": "USD",
+    "symbol": "$",
+    "retailers": [
+      {"domain": "amazon.com", "name": "Amazon US", "priority": 1},
+      {"domain": "bestbuy.com", "name": "Best Buy", "priority": 1},
+      {"domain": "walmart.com", "name": "Walmart", "priority": 2},
+      {"domain": "target.com", "name": "Target", "priority": 2},
+      {"domain": "newegg.com", "name": "Newegg", "priority": 3},
+      {"domain": "bhphotovideo.com", "name": "B&H Photo", "priority": 3}
+    ]
+  },
+  "UK": {
+    "location_name": "United Kingdom",
+    "currency": "GBP",
+    "symbol": "£",
+    "retailers": [
+      {"domain": "amazon.co.uk", "name": "Amazon UK", "priority": 1},
+      {"domain": "currys.co.uk", "name": "Currys", "priority": 1},
+      {"domain": "argos.co.uk", "name": "Argos", "priority": 2},
+      {"domain": "johnlewis.com", "name": "John Lewis", "priority": 2}
+    ]
+  },
+  "DE": {
+    "location_name": "Germany",
+    "currency": "EUR",
+    "symbol": "€",
+    "retailers": [
+      {"domain": "amazon.de", "name": "Amazon Germany", "priority": 1},
+      {"domain": "mediamarkt.de", "name": "MediaMarkt", "priority": 1},
+      {"domain": "saturn.de", "name": "Saturn", "priority": 2},
+      {"domain": "otto.de", "name": "Otto", "priority": 2}
+    ]
+  },
+  "JP": {
+    "location_name": "Japan",
+    "currency": "JPY",
+    "symbol": "¥",
+    "retailers": [
+      {"domain": "amazon.co.jp", "name": "Amazon Japan", "priority": 1},
+      {"domain": "rakuten.co.jp", "name": "Rakuten", "priority": 1},
+      {"domain": "yodobashi.com", "name": "Yodobashi", "priority": 2}
+    ]
+  },
+  "AU": {
+    "location_name": "Australia",
+    "currency": "AUD",
+    "symbol": "A$",
+    "retailers": [
+      {"domain": "amazon.com.au", "name": "Amazon Australia", "priority": 1},
+      {"domain": "jbhifi.com.au", "name": "JB Hi-Fi", "priority": 1},
+      {"domain": "harveynorman.com.au", "name": "Harvey Norman", "priority": 2}
+    ]
+  },
+  "CA": {
+    "location_name": "Canada",
+    "currency": "CAD",
+    "symbol": "C$",
+    "retailers": [
+      {"domain": "amazon.ca", "name": "Amazon Canada", "priority": 1},
+      {"domain": "bestbuy.ca", "name": "Best Buy Canada", "priority": 1},
+      {"domain": "canadacomputers.com", "name": "Canada Computers", "priority": 2}
+    ]
+  },
+  "FR": {
+    "location_name": "France",
+    "currency": "EUR",
+    "symbol": "€",
+    "retailers": [
+      {"domain": "amazon.fr", "name": "Amazon France", "priority": 1},
+      {"domain": "fnac.com", "name": "Fnac", "priority": 1},
+      {"domain": "darty.com", "name": "Darty", "priority": 2}
+    ]
+  },
+  "_global": {
+    "note": "Global retailers included for any region as fallback",
+    "retailers": [
+      {"domain": "ebay.com", "name": "eBay"},
+      {"domain": "aliexpress.com", "name": "AliExpress"}
+    ]
+  }
+}
