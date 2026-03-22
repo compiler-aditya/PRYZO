@@ -8,7 +8,7 @@ client = genai.Client(api_key=settings.GEMINI_API_KEY)
 MODEL = "gemini-2.5-flash"
 
 
-async def score_story(text: str) -> dict:
+async def score_story(text: str, source_type: str = "user_blog") -> dict:
     """Score a story on emotional depth, universality, and originality.
 
     Returns:
@@ -25,31 +25,52 @@ async def score_story(text: str) -> dict:
     """
     response = client.models.generate_content(
         model=MODEL,
-        contents=f"""Score this personal story for an anonymous storytelling platform.
+        contents=f"""Score this text for Voiceless — a platform that turns human-written content into audio episodes.
+
+We accept a WIDE range of human writing: personal stories, philosophical essays, scientific reflections,
+expert knowledge sharing, opinion pieces, creative writing, cultural commentary, poetry, technical deep-dives
+written with passion, memoirs, travel writing, and more.
 
 Rate on three dimensions (1-10):
 
-1. EMOTIONAL_DEPTH: Does it convey genuine, specific emotion?
-   Low (1-3): Generic statements like "I was sad" or "it was hard"
-   Medium (4-6): Real emotion but surface-level
-   High (7-10): Specific, visceral feeling — "the silence in the house was louder than any argument"
+1. HUMAN_VOICE: Is this genuinely written by a human with a personal perspective?
+   Score HIGH (7-10) for:
+   - Personal stories with real emotion
+   - Expert writing where the author's passion/experience shows through
+   - Philosophical or intellectual essays with a distinct viewpoint
+   - Scientific writing that shares wonder, curiosity, or hard-won insight
+   - Poetry, creative writing, cultural commentary
+   - Opinion pieces with genuine conviction
+   Score LOW (1-3) for:
+   - Auto-generated product pages, SEO spam, marketing copy
+   - Generic corporate content with no human voice
+   - Random website pages (navigation menus, terms of service, landing pages)
+   - Pure data dumps or tables with no narrative
+   - AI-generated filler content
 
-2. UNIVERSALITY: Would a stranger from a completely different culture relate?
-   Low: Too niche or requires specific context to understand
-   High: The details are personal but the FEELING is universal
+2. SUBSTANCE: Does this have real depth — emotional, intellectual, or experiential?
+   Score HIGH for: deep personal reflection, rigorous analysis, hard-won wisdom,
+   unique expertise, genuine philosophical inquiry, vivid storytelling
+   Score LOW for: shallow listicles, recycled motivational quotes, surface-level takes,
+   content that says nothing new
 
-3. ORIGINALITY: Is this a fresh perspective?
-   Low: Generic advice, listicle, motivational cliche, "live laugh love" energy
-   High: A unique window into a real human experience
+3. ORIGINALITY: Is this a fresh or authentic perspective?
+   Score HIGH for: unique life experiences, novel arguments, specialist knowledge,
+   unconventional viewpoints, distinctive writing voice
+   Score LOW for: generic advice, cliches, content indistinguishable from a thousand other posts
 
 Also determine:
-- CATEGORY: exactly one of: loss, love, identity, work, family, fear, joy, change, regret, hope
-- EMOTION: exactly one of: grief, joy, anger, nostalgia, fear, peace, love, regret
-- IS_AI: probability this was written by AI (0.0 = definitely human, 1.0 = definitely AI)
+- CATEGORY: exactly one of: loss, love, identity, work, family, fear, joy, change, regret, hope, philosophy, science, craft, culture, wisdom
+- EMOTION: exactly one of: grief, joy, anger, nostalgia, fear, peace, love, regret, wonder, conviction, curiosity
+- IS_AI: probability this was written by AI (0.0 = definitely human, 1.0 = definitely AI).
+  Score HIGH if it reads like ChatGPT output (generic, hedging, overly balanced, no personal voice).
+  Score LOW if it has quirks, strong opinions, specific experiences, or distinctive style.
+- IS_BLOG: is this actual blog/essay/article content written by a person? (true/false)
+  false if it's a product page, navigation page, terms of service, landing page, API docs, etc.
 - TITLE: suggest a short evocative title (3-6 words, no quotes)
 
 Respond as JSON only, no markdown:
-{{"emotional_depth": 8, "universality": 9, "originality": 7, "category": "loss", "emotion": "grief", "is_ai_probability": 0.1, "title_suggestion": "The Last Customer"}}
+{{"human_voice": 8, "substance": 9, "originality": 7, "category": "philosophy", "emotion": "wonder", "is_ai_probability": 0.1, "is_blog": true, "title_suggestion": "The Weight of Knowing"}}
 
 TEXT:
 {text}""",
@@ -57,27 +78,36 @@ TEXT:
 
     try:
         raw = response.text.strip()
-        # Strip markdown code fences if present
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
         result = json.loads(raw)
     except (json.JSONDecodeError, IndexError):
         return {
-            "emotional_depth": 0,
-            "universality": 0,
+            "human_voice": 0,
+            "substance": 0,
             "originality": 0,
             "category": "hope",
             "emotion": "peace",
             "is_ai_probability": 0.5,
+            "is_blog": False,
             "title_suggestion": "Untitled",
             "passes": False,
         }
 
+    # Map new field names back to legacy names for compatibility
+    result.setdefault("emotional_depth", result.get("human_voice", 0))
+    result.setdefault("universality", result.get("substance", 0))
+
+    is_blog = result.get("is_blog", True)
+    total = result.get("human_voice", 0) + result.get("substance", 0) + result.get("originality", 0)
+
+    # Skip is_blog check for direct user submissions — they're not blog posts
+    blog_ok = is_blog if source_type == "user_blog" else True
+
     result["passes"] = (
-        result.get("emotional_depth", 0) >= 7
-        and result.get("universality", 0) >= 7
-        and result.get("originality", 0) >= 7
-        and result.get("is_ai_probability", 1.0) < 0.7
+        blog_ok
+        and total >= 10
+        and result.get("is_ai_probability", 1.0) < 0.85
     )
 
     return result

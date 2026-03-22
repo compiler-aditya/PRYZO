@@ -101,6 +101,12 @@ CREATE TABLE IF NOT EXISTS write_backs (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Migration: add status_reason column and 'failed' status
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS status_reason TEXT;
+ALTER TABLE stories DROP CONSTRAINT IF EXISTS stories_status_check;
+ALTER TABLE stories ADD CONSTRAINT stories_status_check
+  CHECK (status IN ('pending', 'anonymizing', 'enriching', 'scripting', 'producing', 'published', 'rejected', 'failed'));
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_stories_status ON stories(status);
 CREATE INDEX IF NOT EXISTS idx_stories_category ON stories(category);

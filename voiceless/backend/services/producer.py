@@ -10,34 +10,30 @@ from config import settings
 client = ElevenLabs(api_key=settings.ELEVENLABS_API_KEY)
 
 
-async def produce_episode(script: dict, narrator_voice_id: str) -> tuple[bytes, int]:
-    """Produce a full audio episode from a script.
+async def produce_episode(script: dict, emotion: str, gender: str = "neutral") -> tuple[bytes, int]:
+    """Produce a full audio episode from a script using a single voice.
 
     Args:
         script: {sections, sound_effects, music, voice_direction}
-        narrator_voice_id: pre-created narrator voice ID
+        emotion: Story emotion for voice matching
+        gender: "male", "female", or "neutral"
 
     Returns:
         (audio_bytes, duration_secs)
     """
-    # Step 1: Create emotion-matched voice for the story speaker
+    # Pick a single voice matched to emotion + gender (no narrator)
     from services.voice_designer import create_emotion_matched_voice
-    emotion = script.get("music", {}).get("mood", "peace")
-    story_voice_id, _ = await create_emotion_matched_voice(emotion)
+    voice_id, _ = await create_emotion_matched_voice(emotion, gender)
 
-    # Step 2: Generate speech for each section
+    # Generate speech for each section — all with the same voice
     speech_segments = []
     for section in script["sections"]:
-        voice_id = narrator_voice_id if section["speaker"] == "narrator" else story_voice_id
-
-        # Clean audio tags for the API (ElevenLabs v3 handles some natively)
         text = section["text"]
-
         audio_bytes = _generate_speech(voice_id, text, emotion)
         segment = AudioSegment.from_mp3(io.BytesIO(audio_bytes))
         speech_segments.append(segment)
 
-    # Step 3: Generate sound effects
+    # Generate sound effects
     sfx_segments = []
     for effect in script.get("sound_effects", []):
         try:
@@ -50,28 +46,25 @@ async def produce_episode(script: dict, narrator_voice_id: str) -> tuple[bytes, 
         except Exception:
             continue
 
-    # Step 4: Combine speech segments with short pauses
+    # Combine speech segments with short pauses
     combined = AudioSegment.silent(duration=500)  # 0.5s intro silence
     for i, segment in enumerate(speech_segments):
         combined += segment
-        # Add pause between sections
         if i < len(speech_segments) - 1:
-            combined += AudioSegment.silent(duration=1000)  # 1s between sections
+            combined += AudioSegment.silent(duration=1000)
 
-    # Step 5: Overlay sound effects at approximate positions
+    # Overlay sound effects at approximate positions
     if sfx_segments:
-        # Place sound effects at natural break points
         total_speech_ms = len(combined)
         for i, sfx in enumerate(sfx_segments):
-            # Space effects evenly through the episode
             position = int(total_speech_ms * (i + 1) / (len(sfx_segments) + 1))
-            sfx = sfx - 10  # Lower SFX volume by 10dB
+            sfx = sfx - 10
             combined = combined.overlay(sfx, position=position)
 
-    # Step 6: Add trailing silence
+    # Trailing silence
     combined += AudioSegment.silent(duration=2000)
 
-    # Step 7: Export
+    # Export
     output = io.BytesIO()
     combined.export(output, format="mp3", bitrate="128k")
     audio_bytes = output.getvalue()
@@ -81,35 +74,24 @@ async def produce_episode(script: dict, narrator_voice_id: str) -> tuple[bytes, 
 
 
 async def produce_moment(text: str, voice_id: str) -> tuple[bytes, int]:
-    """Produce a short audio clip for a life moment.
-
-    Args:
-        text: Anonymized moment text
-        voice_id: User's persistent voice ID
-
-    Returns:
-        (audio_bytes, duration_secs)
-    """
+    """Produce a short audio clip for a life moment."""
     audio_bytes = _generate_speech(voice_id, text, "peace")
     segment = AudioSegment.from_mp3(io.BytesIO(audio_bytes))
 
-    # Add gentle ambient texture
     try:
         ambient_bytes = _generate_sound_effect(
             "soft ambient room tone warm quiet",
             duration=min(len(segment) / 1000 + 1, 30),
         )
         ambient = AudioSegment.from_mp3(io.BytesIO(ambient_bytes))
-        ambient = ambient - 18  # Very quiet background
-        # Loop ambient to match speech length if needed
+        ambient = ambient - 18
         while len(ambient) < len(segment):
             ambient += ambient
         ambient = ambient[:len(segment)]
         segment = segment.overlay(ambient)
     except Exception:
-        pass  # Skip ambient if SFX generation fails
+        pass
 
-    # Wrap with short silence
     final = AudioSegment.silent(duration=300) + segment + AudioSegment.silent(duration=1000)
 
     output = io.BytesIO()
@@ -119,7 +101,6 @@ async def produce_moment(text: str, voice_id: str) -> tuple[bytes, int]:
 
 def _generate_speech(voice_id: str, text: str, emotion: str) -> bytes:
     """Generate speech audio using ElevenLabs TTS."""
-    # Adjust voice settings based on emotion
     stability = 0.3 if emotion in ("grief", "fear", "regret") else 0.5
     similarity = 0.8
 
@@ -134,7 +115,6 @@ def _generate_speech(voice_id: str, text: str, emotion: str) -> bytes:
         },
     )
 
-    # Collect all chunks from the generator
     audio_bytes = b""
     for chunk in audio_generator:
         audio_bytes += chunk
@@ -144,7 +124,7 @@ def _generate_speech(voice_id: str, text: str, emotion: str) -> bytes:
 
 def _generate_sound_effect(description: str, duration: float = 3.0) -> bytes:
     """Generate a sound effect using ElevenLabs SFX API."""
-    duration = min(max(duration, 0.5), 30.0)  # Clamp to API limits
+    duration = min(max(duration, 0.5), 30.0)
 
     result = client.text_to_sound_effects.convert(
         text=description,

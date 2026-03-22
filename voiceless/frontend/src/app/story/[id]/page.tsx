@@ -8,9 +8,10 @@ import TimeCapsule from "@/components/TimeCapsule";
 import YoureNotAlone from "@/components/YoureNotAlone";
 import ReflectionWidget from "@/components/ReflectionWidget";
 import IdentityPromise from "@/components/IdentityPromise";
+import Link from "next/link";
 
-export default function StoryPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function StoryPage({ params }: { params: { id: string } | Promise<{ id: string }> }) {
+  const { id } = params instanceof Promise ? use(params) : params;
   const [story, setStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,24 +23,67 @@ export default function StoryPage({ params }: { params: Promise<{ id: string }> 
   }, [id]);
 
   if (loading) {
-    return <div className="text-center text-zinc-500 py-16">Loading story...</div>;
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="skeleton w-6 h-6 rounded-full" />
+          <div className="skeleton h-6 w-24 rounded-full" />
+        </div>
+        <div className="glass-player rounded-xl p-6 md:p-8 border border-outline-variant/10">
+          <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="w-40 h-40 skeleton rounded-lg flex-shrink-0" />
+            <div className="flex-1 space-y-4 w-full">
+              <div className="skeleton h-8 w-3/4" />
+              <div className="flex gap-[2px] h-16 items-end">
+                {Array.from({ length: 40 }).map((_, i) => (
+                  <div key={i} className="flex-1 skeleton rounded-full" style={{ height: `${20 + (i * 7 % 60)}%` }} />
+                ))}
+              </div>
+              <div className="skeleton h-2 w-full rounded-full" />
+              <div className="flex items-center gap-6">
+                <div className="skeleton w-14 h-14 rounded-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!story) {
-    return <div className="text-center text-zinc-500 py-16">Story not found.</div>;
+    return (
+      <div className="text-center py-16 animate-fade-in">
+        <div className="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mx-auto mb-4">
+          <span className="material-symbols-outlined text-3xl text-on-surface-variant/40">search_off</span>
+        </div>
+        <p className="text-on-surface-variant mb-4">Story not found.</p>
+        <Link href="/" className="text-primary hover:underline text-sm">Back to stories</Link>
+      </div>
+    );
   }
 
   const sourceLabel =
     story.source_type === "cc_blog"
-      ? `Found on a ${story.time_capsule?.era || ""} blog`
-      : "Submitted anonymously";
+      ? `From the Archives ${story.time_capsule?.era ? `\u00B7 ${story.time_capsule.era}` : ""}`
+      : "Anonymous Submission";
 
   return (
-    <div className="space-y-6">
-      {/* Story header */}
-      <div className="text-center">
-        <div className="text-xs text-zinc-600 uppercase tracking-wide mb-2">
-          {story.category} · {sourceLabel}
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Back + Category badge */}
+      <div className="flex items-center gap-4 animate-fade-in">
+        <Link href="/" className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">
+          arrow_back
+        </Link>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 bg-primary-container/10 text-primary text-xs font-bold uppercase tracking-wide rounded-full">
+            {story.category}
+          </span>
+          {story.emotion && (
+            <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full bg-surface-container text-on-surface-variant/60`}>
+              {story.emotion}
+            </span>
+          )}
+          <span className="text-xs text-on-surface-variant/40">{sourceLabel}</span>
         </div>
       </div>
 
@@ -48,61 +92,84 @@ export default function StoryPage({ params }: { params: Promise<{ id: string }> 
         <AudioPlayer
           audioUrl={story.audio_url}
           title={story.title}
+          storyId={story.id}
           duration={story.audio_duration_secs}
           text={story.anonymized_text}
+          emotion={story.emotion}
         />
       ) : (
-        <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-          <h2 className="text-xl font-semibold text-zinc-100 mb-4">
-            &ldquo;{story.title}&rdquo;
+        <div className="glass-player rounded-xl p-6 md:p-8 border border-outline-variant/10 shadow-2xl animate-fade-in-up">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
+            {story.title}
           </h2>
-          <p className="text-zinc-400 leading-relaxed italic">
-            {story.anonymized_text}
+          <p className="text-on-surface-variant leading-relaxed italic">
+            &ldquo;{story.anonymized_text}&rdquo;
           </p>
+          {story.status === "producing" && (
+            <div className="mt-4 flex items-center gap-2 text-secondary text-sm">
+              <div className="flex items-end gap-[2px]">
+                <div className="eq-bar eq-bar-1 bg-secondary w-[2px]" style={{ height: "10px" }} />
+                <div className="eq-bar eq-bar-2 bg-secondary w-[2px]" style={{ height: "10px" }} />
+                <div className="eq-bar eq-bar-3 bg-secondary w-[2px]" style={{ height: "10px" }} />
+              </div>
+              Audio is being produced...
+            </div>
+          )}
         </div>
       )}
 
       {/* Identity promise */}
-      <IdentityPromise compact />
+      <div className="animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+        <IdentityPromise compact />
+      </div>
 
       {/* Time Capsule */}
       {story.time_capsule && (
-        <TimeCapsule
-          era={story.time_capsule.era}
-          facts={story.time_capsule.facts}
-          cultural_context={story.time_capsule.cultural_context}
-          statistics={story.time_capsule.statistics}
-        />
+        <div className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+          <TimeCapsule
+            era={story.time_capsule.era}
+            facts={story.time_capsule.facts}
+            cultural_context={story.time_capsule.cultural_context}
+            statistics={story.time_capsule.statistics}
+          />
+        </div>
       )}
 
       {/* Reactions */}
-      <ReactionBar
-        targetId={story.id}
-        targetType="story"
-        initialCounts={story.reaction_counts}
-        meTooCount={story.me_too_count}
-      />
+      <div className="animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+        <ReactionBar
+          targetId={story.id}
+          targetType="story"
+          initialCounts={story.reaction_counts}
+          meTooCount={story.me_too_count}
+        />
+      </div>
 
       {/* You're Not Alone */}
       {story.similar_stories && story.similar_stories.length > 0 && (
-        <YoureNotAlone stories={story.similar_stories} />
+        <div className="animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+          <YoureNotAlone stories={story.similar_stories} />
+        </div>
       )}
 
       {/* Reflection companion */}
-      <ReflectionWidget
-        storyTheme={story.category}
-        emotion={story.emotion}
-        era={story.time_capsule?.era}
-      />
+      <div className="animate-fade-in-up" style={{ animationDelay: "500ms" }}>
+        <ReflectionWidget
+          storyTheme={story.category}
+          emotion={story.emotion}
+          era={story.time_capsule?.era}
+        />
+      </div>
 
       {/* Share prompt */}
-      <div className="text-center py-4">
-        <a
+      <div className="text-center py-4 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+        <Link
           href={`/submit?category=${story.category}`}
-          className="inline-block bg-zinc-900 border border-zinc-800 text-zinc-300 px-6 py-2.5 rounded-full text-sm hover:border-zinc-700 transition"
+          className="inline-flex items-center gap-2 bg-surface-container border border-outline-variant/10 text-on-surface-variant px-6 py-3 rounded-full text-sm font-medium hover:border-primary-container/30 hover:text-primary hover:scale-105 transition-all ripple-effect"
         >
+          <span className="material-symbols-outlined text-lg">edit</span>
           Share YOUR story about {story.category}
-        </a>
+        </Link>
       </div>
     </div>
   );

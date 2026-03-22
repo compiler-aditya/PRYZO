@@ -18,5 +18,8 @@ pydub==0.25.1
 # Async tasks
 celery[redis]==5.4.0
 
+# Cloud storage
+google-cloud-storage==2.18.0
+
 # Utilities
 pydantic==2.9.0

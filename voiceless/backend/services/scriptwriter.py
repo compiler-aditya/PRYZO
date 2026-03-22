@@ -56,38 +56,31 @@ SIMILAR STORIES FOUND: {similar_count} people wrote publicly about a similar exp
 
 ---
 
-SCRIPT STRUCTURE:
+SCRIPT STRUCTURE — SINGLE FIRST-PERSON SPEAKER (no narrator):
 
-1. OPENING (speaker: "narrator"): 2-3 sentences. Set the emotional scene using time capsule context.
-   Weave in Firecrawl facts naturally. Example: "It was 2012. The economy was still recovering.
-   Across the country, 400,000 small businesses had closed that year. This is one of them."
+The ENTIRE episode is spoken by ONE person — the storyteller themselves. They tell their own story,
+weave in context, and close with a reflection. Everything is in FIRST PERSON ("I", "me", "my").
 
-2. STORY (speaker: "story"): The anonymized text adapted for audio.
-   - Add ElevenLabs audio tags in square brackets: [gentle], [heavy], [hopeful], [trembling], [whispered]
+1. OPENING: 2-3 sentences. The storyteller sets the scene using time capsule context in their own words.
+   Example: "It was 2012. I remember the economy was still recovering... 400,000 small businesses
+   had closed that year. Mine was about to become one of them."
+
+2. STORY: The main anonymized text adapted for audio.
+   - Keep FIRST PERSON throughout: "I remember...", "I felt...", "I didn't know..."
+   - Add ElevenLabs audio tags: [gentle], [heavy], [hopeful], [trembling], [whispered]
    - Add ellipses for trailing thoughts...
    - Add [pause] markers between heavy moments
    - Adapt written text to spoken cadence (shorter sentences, natural breath points)
    - Mark intimate confessions with [whispered]
+   - You can split the story into 2-3 sections for natural pacing
 
-3. CONTEXT BREAK (speaker: "narrator"): 1-2 sentences. Insert time capsule details or statistics
-   between story sections. Connect personal to universal.
+3. CONTEXT WEAVE: The storyteller naturally weaves in statistics or facts from the time capsule.
+   Example: "I didn't know it then, but {similar_count} other people were going through the exact same thing."
 
-4. YOU'RE NOT ALONE (speaker: "narrator"): 1-2 sentences.
-   "{similar_count} other people wrote publicly about this same feeling. All anonymous. All real."
+4. CLOSING: The storyteller reflects and closes.
+   Example: "If you're listening to this... and something felt familiar... just know — you're not alone."
 
-5. CLOSING (speaker: "narrator"): 1-2 sentences. Gentle reflection prompt.
-   "If this story reminded you of your own, you're not alone."
-
-VOICE DIRECTION: Describe the ideal voice for the "story" speaker based on the emotion.
-Reference the emotion table:
-- Grief: Quiet, measured, slightly low. Like someone speaking at 2 AM.
-- Joy: Warm, slightly breathless. Like someone sharing good news they can't contain.
-- Anger: Steady, clear, controlled heat. Not shouting — seething.
-- Nostalgia: Soft, slightly distant. Like someone looking out a window.
-- Fear: Slightly faster, tighter. Like someone who needs to get the words out.
-- Peace: Slow, deep, calm. Like someone who finally understands.
-- Love: Tender, careful with every word.
-- Regret: Heavy, with pauses. Like the words physically weigh something.
+ALL sections use speaker: "story". Do NOT use speaker: "narrator" at all.
 
 SOUND EFFECTS: 1-3 ambient sounds that match the story's mood and era.
 Each: description (for ElevenLabs SFX API), duration (seconds), timing (when to play).
@@ -97,12 +90,13 @@ MUSIC: One background track description and mood.
 Respond as JSON only:
 {{
   "sections": [
-    {{"speaker": "narrator", "text": "It was 2012..."}},
-    {{"speaker": "story", "text": "[heavy] I remember the last customer..."}},
-    {{"speaker": "narrator", "text": "That year, 400,000 small businesses..."}}
+    {{"speaker": "story", "text": "[gentle] It was 2012. I remember the economy was still shaking... 400,000 small businesses had closed that year. Mine was about to become one of them."}},
+    {{"speaker": "story", "text": "[heavy] I remember the last customer who walked in... I stood behind the counter, watching them leave. [pause] I knew it was over."}},
+    {{"speaker": "story", "text": "[whispered] I locked the door for the last time... and I just stood there. [pause] I didn't know it then, but so many other people were standing in front of their own locked doors that same year."}},
+    {{"speaker": "story", "text": "[hopeful] If you're listening to this... and something felt familiar... you're not alone. None of us are."}}
   ],
   "sound_effects": [
-    {{"description": "shop bell ringing gently then silence", "duration": 3.0, "timing": "after story section 1"}}
+    {{"description": "shop bell ringing gently then silence", "duration": 3.0, "timing": "after section 1"}}
   ],
   "music": {{"description": "solo piano gentle melancholy reflective", "mood": "grief"}},
   "voice_direction": "Quiet measured voice slightly low like someone speaking at 2 AM"
@@ -118,9 +112,8 @@ Respond as JSON only:
         # Fallback: simple two-section script
         return {
             "sections": [
-                {"speaker": "narrator", "text": f"This is a story about {category}. Listen carefully."},
                 {"speaker": "story", "text": anonymized_text},
-                {"speaker": "narrator", "text": "If this story reminded you of your own, you're not alone."},
+                {"speaker": "story", "text": "If you're listening to this and something felt familiar... you're not alone."},
             ],
             "sound_effects": [],
             "music": {"description": "gentle ambient piano", "mood": emotion},

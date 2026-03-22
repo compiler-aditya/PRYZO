@@ -40,12 +40,20 @@ async def get_story(story_id: str):
     if not result.data:
         raise HTTPException(status_code=404, detail="Story not found")
 
-    # Increment listen count
+    return result.data
+
+
+@router.post("/{story_id}/listen")
+async def record_listen(story_id: str):
+    """Record a listen — called once when the user actually presses play."""
+    db = get_db()
+    result = db.table("stories").select("listen_count").eq("id", story_id).single().execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Story not found")
     db.table("stories").update(
         {"listen_count": result.data["listen_count"] + 1}
     ).eq("id", story_id).execute()
-
-    return result.data
+    return {"listen_count": result.data["listen_count"] + 1}
 
 
 @router.get("/{story_id}/similar")

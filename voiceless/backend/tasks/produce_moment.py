@@ -1,5 +1,9 @@
 """Celery task: Moment audio production."""
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import asyncio
 from datetime import datetime, timezone
 from tasks.celery_app import celery
@@ -27,14 +31,14 @@ def produce_moment_task(self, moment_id: str, anonymized_text: str, voice_id: st
         # Produce audio
         audio_bytes, duration = _run(produce_moment(anonymized_text, voice_id))
 
-        # Upload to Supabase Storage
-        storage_path = f"moments/{moment_id}.mp3"
-        db.storage.from_("audio").upload(
-            path=storage_path,
-            file=audio_bytes,
-            file_options={"content-type": "audio/mpeg"},
-        )
-        audio_url = db.storage.from_("audio").get_public_url(storage_path)
+        # Upload to Google Cloud Storage
+        from google.cloud import storage as gcs
+        from config import settings
+        gcs_client = gcs.Client.from_service_account_json(settings.GCS_KEY_FILE)
+        bucket = gcs_client.bucket(settings.GCS_BUCKET)
+        blob = bucket.blob(f"moments/{moment_id}.mp3")
+        blob.upload_from_string(audio_bytes, content_type="audio/mpeg")
+        audio_url = f"https://storage.googleapis.com/{settings.GCS_BUCKET}/moments/{moment_id}.mp3"
 
         # Update moment count on voice profile
         moment_data = db.table("moments").select("voice_profile_id").eq("id", moment_id).single().execute()

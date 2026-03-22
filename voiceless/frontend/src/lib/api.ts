@@ -30,16 +30,20 @@ export async function getStory(id: string) {
   return fetcher<Story>(`/stories/${id}`);
 }
 
+export async function recordListen(id: string) {
+  return fetcher<{ listen_count: number }>(`/stories/${id}/listen`, { method: "POST" });
+}
+
 export async function getSimilarStories(id: string) {
   return fetcher<{ similar_stories: SimilarStory[] }>(`/stories/${id}/similar`);
 }
 
 // --- Submissions ---
 
-export async function submitTextStory(text: string) {
+export async function submitTextStory(text: string, gender?: string) {
   return fetcher<{ id: string; status: string }>("/submit/text", {
     method: "POST",
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, gender: gender || "neutral" }),
   });
 }
 
@@ -51,14 +55,21 @@ export async function submitVoiceStory(audioBlob: Blob) {
 }
 
 export async function submitBlog(blogUrl: string) {
-  return fetcher<{ blog_url: string; candidates: BlogCandidate[] }>("/submit/blog", {
+  return fetcher<{ blog_url: string; total_posts_found: number; candidates: BlogCandidate[] }>("/submit/blog", {
     method: "POST",
     body: JSON.stringify({ blog_url: blogUrl }),
   });
 }
 
+export async function produceBlogCandidate(candidate: { url: string; title: string; text: string }) {
+  return fetcher<{ id: string; status: string; title: string }>("/submit/blog/produce", {
+    method: "POST",
+    body: JSON.stringify(candidate),
+  });
+}
+
 export async function getSubmissionStatus(id: string) {
-  return fetcher<{ id: string; status: string; anonymized_preview?: string }>(`/submit/status/${id}`);
+  return fetcher<{ id: string; status: string; status_reason?: string; anonymized_preview?: string }>(`/submit/status/${id}`);
 }
 
 // --- Moments ---
@@ -165,5 +176,8 @@ export interface BlogCandidate {
   url: string;
   title: string;
   snippet: string;
-  score: Record<string, number>;
+  full_text?: string;
+  score: Record<string, number | string>;
+  total_score?: number;
+  passes_quality?: boolean;
 }

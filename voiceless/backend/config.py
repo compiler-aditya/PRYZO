@@ -12,7 +12,7 @@ class Settings:
 
     # Supabase
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+    SUPABASE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", os.getenv("SUPABASE_KEY", ""))
     SUPABASE_STORAGE_BUCKET: str = "audio"
 
     # Redis (for Celery)
@@ -22,6 +22,10 @@ class Settings:
     NARRATOR_VOICE_ID: str = os.getenv("NARRATOR_VOICE_ID", "")
     TTS_MODEL: str = "eleven_v3"
     TTS_FLASH_MODEL: str = "eleven_flash_v2_5"
+
+    # Google Cloud Storage
+    GCS_BUCKET: str = os.getenv("GCS_BUCKET", "voiceless-audio-prod")
+    GCS_KEY_FILE: str = os.getenv("GCS_KEY_FILE", "gcs-key.json")
 
     # Firecrawl
     FIRECRAWL_BASE_URL: str = "https://api.firecrawl.dev/v2"
