@@ -1,0 +1,8 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+.env
+gcs-key.json
+.mypy_cache
+.pytest_cache

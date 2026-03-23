@@ -63,9 +63,9 @@ export default function ReactionBar({ targetId, targetType, initialCounts, meToo
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10 animate-fade-in-up">
-      <div className="text-xs font-bold uppercase tracking-widest text-secondary mb-4">How did this make you feel?</div>
-      <div className="flex gap-2 flex-wrap">
+    <div className="bg-surface-container-low rounded-xl p-3 md:p-5 border border-outline-variant/10 animate-fade-in-up">
+      <div className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-secondary mb-3 md:mb-4">How did this make you feel?</div>
+      <div className="flex gap-1.5 md:gap-2 flex-wrap">
         {REACTIONS.map((r) => {
           const isReacted = reacted.has(r.type);
           const isJust = justReacted === r.type;
@@ -74,14 +74,14 @@ export default function ReactionBar({ targetId, targetType, initialCounts, meToo
               key={r.type}
               onClick={() => handleReact(r.type)}
               disabled={isReacted}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 text-sm font-medium
+              className={`flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-full border transition-all duration-300 text-xs md:text-sm font-medium
                 ${isReacted
                   ? "border-primary-container/40 bg-primary-container/10 text-primary scale-105"
-                  : "border-outline-variant/15 text-on-surface-variant/60 hover:border-primary-container/40 hover:text-primary hover:bg-primary-container/5 hover:scale-105 active:scale-95"
+                  : "border-outline-variant/15 text-on-surface-variant/60 hover:border-primary-container/40 hover:text-primary hover:bg-primary-container/5 active:scale-95"
                 }`}
             >
               <span
-                className={`material-symbols-outlined text-lg transition-transform duration-300 ${isJust ? "animate-pop" : ""}`}
+                className={`material-symbols-outlined text-base md:text-lg transition-transform duration-300 ${isJust ? "animate-pop" : ""}`}
                 style={isReacted ? { fontVariationSettings: "'FILL' 1" } : {}}
               >
                 {r.icon}

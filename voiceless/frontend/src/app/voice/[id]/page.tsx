@@ -21,20 +21,20 @@ export default function VoiceProfilePage({ params }: { params: { id: string } | 
   if (!profile) return <div className="text-center text-on-surface-variant py-16">Voice not found.</div>;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-3xl mx-auto space-y-5 md:space-y-8">
       {/* Back */}
       <Link href="/moments" className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">
         arrow_back
       </Link>
 
       {/* Profile header */}
-      <div className="text-center py-6">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-container to-secondary mx-auto mb-4 flex items-center justify-center">
-          <span className="material-symbols-outlined text-4xl text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+      <div className="text-center py-4 md:py-6">
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary-container to-secondary mx-auto mb-3 md:mb-4 flex items-center justify-center">
+          <span className="material-symbols-outlined text-3xl md:text-4xl text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
             mic
           </span>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight mb-1">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">
           Voice #{profile.voice_number}
         </h1>
         {profile.tagline && (

@@ -110,7 +110,10 @@ def produce_episode_task(self, story_id: str, raw_text: str, source_type: str, g
 
         # Step 6: Upload to Google Cloud Storage
         from google.cloud import storage as gcs
-        gcs_client = gcs.Client.from_service_account_json(settings.GCS_KEY_FILE)
+        if settings.GCS_KEY_FILE:
+            gcs_client = gcs.Client.from_service_account_json(settings.GCS_KEY_FILE)
+        else:
+            gcs_client = gcs.Client()  # uses ADC on Cloud Run
         bucket = gcs_client.bucket(settings.GCS_BUCKET)
         blob = bucket.blob(f"episodes/{story_id}.mp3")
         blob.upload_from_string(audio_bytes, content_type="audio/mpeg")
@@ -135,7 +138,6 @@ def produce_episode_task(self, story_id: str, raw_text: str, source_type: str, g
         db.table("stories").update({
             "audio_url": audio_url,
             "audio_duration_secs": duration,
-            "narrator_voice_id": narrator_voice_id,
             "status": "published",
             "published_at": datetime.now(timezone.utc).isoformat(),
         }).eq("id", story_id).execute()

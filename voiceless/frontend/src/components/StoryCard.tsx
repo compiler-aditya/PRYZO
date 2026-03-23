@@ -38,7 +38,7 @@ export default function StoryCard({ story, index }: { story: Story; index?: numb
   return (
     <Link href={`/story/${story.id}`} className="block group">
       <div
-        className={`animate-fade-in-up ${emotionClass} emotion-glow card-hover flex items-center gap-4 md:gap-6 p-4 rounded-xl border border-transparent hover:bg-surface-container-high/60 transition-all cursor-pointer`}
+        className={`animate-fade-in-up ${emotionClass} emotion-glow card-hover flex items-center gap-3 md:gap-6 p-3 md:p-4 rounded-xl border border-transparent hover:bg-surface-container-high/60 transition-all cursor-pointer`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -50,7 +50,7 @@ export default function StoryCard({ story, index }: { story: Story; index?: numb
         )}
 
         {/* Category icon with equalizer on hover */}
-        <div className="w-12 h-12 bg-surface-container-highest rounded-lg flex items-center justify-center relative flex-shrink-0 overflow-hidden">
+        <div className="w-10 h-10 md:w-12 md:h-12 bg-surface-container-highest rounded-lg flex items-center justify-center relative flex-shrink-0 overflow-hidden">
           {/* Default icon */}
           <span className={`material-symbols-outlined text-primary/60 transition-all duration-300 ${hovered ? "opacity-0 scale-75" : "opacity-100 scale-100"}`}>
             {icon}
@@ -67,10 +67,10 @@ export default function StoryCard({ story, index }: { story: Story; index?: numb
 
         {/* Title + meta + snippet preview */}
         <div className="flex-1 min-w-0">
-          <h6 className="font-bold text-on-surface group-hover:text-primary transition-colors truncate">
+          <h6 className="font-bold text-sm md:text-base text-on-surface group-hover:text-primary transition-colors truncate">
             {story.title}
           </h6>
-          <p className="text-xs text-on-surface-variant truncate">
+          <p className="text-[10px] md:text-xs text-on-surface-variant truncate">
             {story.category} &middot;{" "}
             {story.source_type === "cc_blog" ? "From the Archives" : "Anonymous Submission"}
           </p>

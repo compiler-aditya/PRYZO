@@ -23,16 +23,16 @@ class Settings:
     TTS_MODEL: str = "eleven_v3"
     TTS_FLASH_MODEL: str = "eleven_flash_v2_5"
 
-    # Google Cloud Storage
+    # Google Cloud Storage — on Cloud Run, uses Application Default Credentials
     GCS_BUCKET: str = os.getenv("GCS_BUCKET", "voiceless-audio-prod")
-    GCS_KEY_FILE: str = os.getenv("GCS_KEY_FILE", "gcs-key.json")
+    GCS_KEY_FILE: str = os.getenv("GCS_KEY_FILE", "")
 
     # Firecrawl
     FIRECRAWL_BASE_URL: str = "https://api.firecrawl.dev/v2"
 
     # App
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    API_PORT: int = int(os.getenv("API_PORT", "8000"))
+    API_PORT: int = int(os.getenv("PORT", os.getenv("API_PORT", "8000")))
 
 
 settings = Settings()

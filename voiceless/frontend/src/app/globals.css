@@ -47,10 +47,27 @@ body {
 /* ============================================
    SCROLLBAR
    ============================================ */
+/* Hide scrollbar on mobile for horizontal scroll areas */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #0b1326; }
 ::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: #584237; }
+
+/* Safe area for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Tap highlight removal for mobile */
+@media (hover: none) {
+  * { -webkit-tap-highlight-color: transparent; }
+  .card-hover:hover { transform: none; box-shadow: none; }
+  .card-hover:active { transform: scale(0.98); }
+  .emotion-glow:hover { box-shadow: none; border-color: transparent; }
+}
 
 /* ============================================
    KEYFRAME ANIMATIONS

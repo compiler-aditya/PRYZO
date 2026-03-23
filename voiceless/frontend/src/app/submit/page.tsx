@@ -355,38 +355,38 @@ export default function SubmitPage() {
 
   // --- Input screen ---
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-2xl mx-auto space-y-5 md:space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tighter mb-2">
+        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tighter mb-1 md:mb-2">
           What&apos;s your <span className="text-primary-container">story</span>?
         </h1>
-        <p className="text-on-surface-variant">
+        <p className="text-on-surface-variant text-sm md:text-base px-2">
           Write or speak about a moment that changed you, a memory you carry, or something you&apos;ve never told anyone.
         </p>
       </div>
 
       {/* Tab selector */}
-      <div className="flex gap-2 justify-center">
+      <div className="flex gap-1.5 md:gap-2 justify-center">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all
+            className={`flex items-center gap-1.5 md:gap-2 px-3.5 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-bold transition-all
               ${tab === t.key
                 ? "bg-primary-container text-on-primary"
                 : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
               }`}
           >
-            <span className="material-symbols-outlined text-lg">{t.icon}</span>
-            {t.label}
+            <span className="material-symbols-outlined text-base md:text-lg">{t.icon}</span>
+            <span className="hidden sm:inline">{t.label}</span>
           </button>
         ))}
       </div>
 
       {/* Voice gender picker — shown for write and speak */}
       {(tab === "write" || tab === "speak") && (
-        <div className="flex items-center justify-center gap-3">
-          <span className="text-xs text-on-surface-variant/60 font-medium">Voice:</span>
+        <div className="flex items-center justify-center gap-2 md:gap-3">
+          <span className="text-[10px] md:text-xs text-on-surface-variant/60 font-medium">Voice:</span>
           {[
             { key: "male", label: "Male", icon: "male" },
             { key: "female", label: "Female", icon: "female" },
@@ -395,13 +395,13 @@ export default function SubmitPage() {
             <button
               key={g.key}
               onClick={() => setGender(g.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all
+              className={`flex items-center gap-1 md:gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold transition-all
                 ${gender === g.key
                   ? "bg-primary-container text-on-primary"
                   : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
                 }`}
             >
-              <span className="material-symbols-outlined text-sm">{g.icon}</span>
+              <span className="material-symbols-outlined text-xs md:text-sm">{g.icon}</span>
               {g.label}
             </button>
           ))}

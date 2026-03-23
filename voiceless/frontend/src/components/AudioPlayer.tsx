@@ -112,7 +112,7 @@ export default function AudioPlayer({ audioUrl, title, storyId, duration, text, 
   const revealedLength = text ? Math.floor((progress / 100) * text.length) : 0;
 
   return (
-    <div className={`glass-player rounded-xl p-6 md:p-8 border border-outline-variant/10 shadow-2xl relative overflow-hidden ${emotionClass} animate-fade-in-up`}>
+    <div className={`glass-player rounded-xl p-4 md:p-8 border border-outline-variant/10 shadow-2xl relative overflow-hidden ${emotionClass} animate-fade-in-up`}>
       {/* No <audio> element — using shared audio from MiniPlayer */}
 
       {/* Background glow that pulses when playing */}
@@ -120,34 +120,34 @@ export default function AudioPlayer({ audioUrl, title, storyId, duration, text, 
         className={`absolute inset-0 bg-gradient-to-br from-primary-container/5 to-transparent transition-opacity duration-1000 ${isPlaying ? "opacity-100" : "opacity-0"}`}
       />
 
-      <div className="flex flex-col md:flex-row gap-6 items-center relative z-10">
-        {/* Album Art */}
-        <div className="relative w-40 h-40 flex-shrink-0 group">
+      <div className="flex flex-row md:flex-row gap-3 md:gap-6 items-center relative z-10">
+        {/* Album Art — compact on mobile */}
+        <div className="relative w-20 h-20 md:w-40 md:h-40 flex-shrink-0 group">
           <div className={`absolute inset-0 bg-gradient-to-br from-primary-container to-secondary rounded-lg transition-transform duration-500 ${isPlaying ? "rotate-6 scale-105" : "rotate-3"}`} />
           <div className="relative w-full h-full bg-surface-container-highest rounded-lg shadow-lg flex items-center justify-center overflow-hidden">
             {/* Vinyl disc that spins when playing */}
-            <div className={`w-28 h-28 rounded-full border-[12px] border-surface-container-lowest flex items-center justify-center ${isPlaying ? "animate-spin-slow" : ""}`}>
-              <div className="w-8 h-8 rounded-full bg-primary-container/40 border-4 border-surface-container-lowest" />
+            <div className={`w-14 h-14 md:w-28 md:h-28 rounded-full border-[6px] md:border-[12px] border-surface-container-lowest flex items-center justify-center ${isPlaying ? "animate-spin-slow" : ""}`}>
+              <div className="w-4 h-4 md:w-8 md:h-8 rounded-full bg-primary-container/40 border-2 md:border-4 border-surface-container-lowest" />
             </div>
             {/* Equalizer overlay when playing */}
-            <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 flex items-end gap-[3px] transition-opacity duration-300 ${isPlaying ? "opacity-100" : "opacity-0"}`}>
-              {[1, 2, 3, 4, 3, 2, 1].map((_, i) => (
-                <div key={i} className={`eq-bar eq-bar-${(i % 4) + 1} bg-primary w-[3px]`} style={{ height: "14px" }} />
+            <div className={`absolute bottom-1.5 md:bottom-3 left-1/2 -translate-x-1/2 flex items-end gap-[2px] md:gap-[3px] transition-opacity duration-300 ${isPlaying ? "opacity-100" : "opacity-0"}`}>
+              {[1, 2, 3, 4, 3].map((_, i) => (
+                <div key={i} className={`eq-bar eq-bar-${(i % 4) + 1} bg-primary w-[2px] md:w-[3px]`} style={{ height: "10px" }} />
               ))}
             </div>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="flex-1 space-y-4 w-full">
+        <div className="flex-1 space-y-2 md:space-y-4 w-full min-w-0">
           <div>
-            <h4 className={`text-2xl md:text-3xl font-bold tracking-tight ${isPlaying ? "animate-text-glow" : ""}`}>
+            <h4 className={`text-base md:text-3xl font-bold tracking-tight line-clamp-2 ${isPlaying ? "animate-text-glow" : ""}`}>
               {title}
             </h4>
           </div>
 
           {/* Waveform Visualization */}
-          <div className="h-16 flex items-end gap-[2px] px-1 cursor-pointer" onClick={seek}>
+          <div className="h-10 md:h-16 flex items-end gap-[1px] md:gap-[2px] px-1 cursor-pointer" onClick={seek}>
             {waveformBars.map((h, i) => {
               const barProgress = (i / waveformBars.length) * 100;
               const isPast = barProgress < progress;
@@ -177,26 +177,26 @@ export default function AudioPlayer({ audioUrl, title, storyId, duration, text, 
           </div>
 
           {/* Playback Controls */}
-          <div className="flex items-center gap-6 pt-1">
-            <button className="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl">
+          <div className="flex items-center gap-3 md:gap-6 pt-1">
+            <button className="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-lg md:text-xl hidden md:block">
               skip_previous
             </button>
             <button
               onClick={togglePlay}
-              className={`w-14 h-14 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-300 ${isPlaying ? "play-btn-active" : ""}`}
+              className={`w-11 h-11 md:w-14 md:h-14 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-300 ${isPlaying ? "play-btn-active" : ""}`}
             >
               <span
-                className="material-symbols-outlined text-3xl"
+                className="material-symbols-outlined text-2xl md:text-3xl"
                 style={{ fontVariationSettings: "'FILL' 1" }}
               >
                 {isPlaying ? "pause" : "play_arrow"}
               </span>
             </button>
-            <button className="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl">
+            <button className="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-lg md:text-xl hidden md:block">
               skip_next
             </button>
             <div className="flex-1" />
-            <button className="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl">
+            <button className="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-lg md:text-xl">
               favorite
             </button>
             <button
@@ -225,7 +225,7 @@ export default function AudioPlayer({ audioUrl, title, storyId, duration, text, 
 
       {/* Story text with karaoke-style reveal */}
       {text && (
-        <div className="mt-6 bg-surface-container-lowest/80 rounded-lg p-5 max-h-48 overflow-y-auto border border-outline-variant/10">
+        <div className="mt-3 md:mt-6 bg-surface-container-lowest/80 rounded-lg p-3 md:p-5 max-h-36 md:max-h-48 overflow-y-auto border border-outline-variant/10">
           <p className="text-sm leading-relaxed italic">
             <span className="text-on-surface">&ldquo;{text.slice(0, revealedLength)}</span>
             <span className="text-on-surface-variant/20">{text.slice(revealedLength, 500)}{text.length > 500 ? "..." : ""}</span>

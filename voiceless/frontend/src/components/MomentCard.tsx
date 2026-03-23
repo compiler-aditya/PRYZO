@@ -29,9 +29,9 @@ export default function MomentCard({ moment }: { moment: Moment }) {
   };
 
   return (
-    <div className={`animate-fade-in-up ${emotionClass} emotion-glow card-hover bg-surface-container-low p-4 rounded-xl border-l-4 ${borderColor} flex gap-4 items-center group cursor-pointer transition-all duration-300`}>
+    <div className={`animate-fade-in-up ${emotionClass} emotion-glow card-hover bg-surface-container-low p-3 md:p-4 rounded-xl border-l-4 ${borderColor} flex gap-3 md:gap-4 items-center group cursor-pointer transition-all duration-300`}>
       {/* Voice avatar */}
-      <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300 flex-shrink-0 relative">
+      <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300 flex-shrink-0 relative">
         <span className="material-symbols-outlined group-hover:opacity-0 transition-opacity duration-200">mic_external_on</span>
         <span
           className="material-symbols-outlined absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200"

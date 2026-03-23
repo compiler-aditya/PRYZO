@@ -95,7 +95,7 @@ export default function MiniPlayer() {
   if (!nowPlaying) return null;
 
   return (
-    <div className="fixed bottom-10 left-0 right-0 z-[45] px-4 md:px-6 animate-fade-in-up">
+    <div className="fixed bottom-[4.5rem] md:bottom-10 left-0 right-0 z-[45] px-3 md:px-6 animate-fade-in-up">
       <div className="max-w-[1200px] mx-auto">
         <div className={`bg-surface-container-highest/95 backdrop-blur-xl rounded-2xl border border-outline-variant/15 shadow-2xl overflow-hidden emotion-${nowPlaying.emotion || "wonder"}`}>
           {/* Progress bar — clickable thin line at top */}

@@ -19,12 +19,12 @@ export default function MomentsPage() {
   }, [page]);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-3xl mx-auto space-y-5 md:space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tighter mb-2">
+        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tighter mb-1 md:mb-2">
           B-Side <span className="text-secondary">Moments</span>
         </h1>
-        <p className="text-on-surface-variant">
+        <p className="text-on-surface-variant text-sm md:text-base px-2">
           Short, meaningful life moments shared anonymously. Follow a voice to hear their journey unfold.
         </p>
       </div>

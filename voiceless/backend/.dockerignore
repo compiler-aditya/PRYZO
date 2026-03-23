@@ -1,0 +1,10 @@
+.env
+.env.*
+__pycache__
+*.pyc
+.git
+.venv
+venv
+.pytest_cache
+.mypy_cache
+gcs-key.json

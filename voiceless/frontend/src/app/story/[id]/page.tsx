@@ -68,22 +68,22 @@ export default function StoryPage({ params }: { params: { id: string } | Promise
       : "Anonymous Submission";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
       {/* Back + Category badge */}
-      <div className="flex items-center gap-4 animate-fade-in">
-        <Link href="/" className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">
+      <div className="flex items-center gap-3 animate-fade-in">
+        <Link href="/" className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors flex-shrink-0">
           arrow_back
         </Link>
-        <div className="flex items-center gap-2">
-          <span className="px-3 py-1 bg-primary-container/10 text-primary text-xs font-bold uppercase tracking-wide rounded-full">
+        <div className="flex items-center gap-1.5 md:gap-2 flex-wrap min-w-0">
+          <span className="px-2.5 py-0.5 md:px-3 md:py-1 bg-primary-container/10 text-primary text-[10px] md:text-xs font-bold uppercase tracking-wide rounded-full">
             {story.category}
           </span>
           {story.emotion && (
-            <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full bg-surface-container text-on-surface-variant/60`}>
+            <span className="px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-bold uppercase tracking-wide rounded-full bg-surface-container text-on-surface-variant/60">
               {story.emotion}
             </span>
           )}
-          <span className="text-xs text-on-surface-variant/40">{sourceLabel}</span>
+          <span className="text-[10px] md:text-xs text-on-surface-variant/40 truncate">{sourceLabel}</span>
         </div>
       </div>
 
@@ -165,9 +165,9 @@ export default function StoryPage({ params }: { params: { id: string } | Promise
       <div className="text-center py-4 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
         <Link
           href={`/submit?category=${story.category}`}
-          className="inline-flex items-center gap-2 bg-surface-container border border-outline-variant/10 text-on-surface-variant px-6 py-3 rounded-full text-sm font-medium hover:border-primary-container/30 hover:text-primary hover:scale-105 transition-all ripple-effect"
+          className="inline-flex items-center gap-2 bg-surface-container border border-outline-variant/10 text-on-surface-variant px-5 py-2.5 md:px-6 md:py-3 rounded-full text-xs md:text-sm font-medium hover:border-primary-container/30 hover:text-primary hover:scale-105 transition-all ripple-effect"
         >
-          <span className="material-symbols-outlined text-lg">edit</span>
+          <span className="material-symbols-outlined text-base md:text-lg">edit</span>
           Share YOUR story about {story.category}
         </Link>
       </div>

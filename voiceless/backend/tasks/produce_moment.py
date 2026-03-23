@@ -34,7 +34,10 @@ def produce_moment_task(self, moment_id: str, anonymized_text: str, voice_id: st
         # Upload to Google Cloud Storage
         from google.cloud import storage as gcs
         from config import settings
-        gcs_client = gcs.Client.from_service_account_json(settings.GCS_KEY_FILE)
+        if settings.GCS_KEY_FILE:
+            gcs_client = gcs.Client.from_service_account_json(settings.GCS_KEY_FILE)
+        else:
+            gcs_client = gcs.Client()  # uses ADC on Cloud Run
         bucket = gcs_client.bucket(settings.GCS_BUCKET)
         blob = bucket.blob(f"moments/{moment_id}.mp3")
         blob.upload_from_string(audio_bytes, content_type="audio/mpeg")
